@@ -1,0 +1,12 @@
+# Local runtime configuration
+.env
+
+# Compiled binaries
+/dumbo-channel
+/dumbo-factory
+
+# Dev only
+go.work
+go.work.sum
+docker-compose.override.yml
+.dev-bin/
