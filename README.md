@@ -77,6 +77,7 @@ Environment only (a `.env` file fills in what the environment does not set):
 |---|---|---|
 | `CHANNEL_ID` | `dumbo-main` | the instance id; run each instance with its own |
 | `LOGOS_CORE_BASE_URL` | `http://localhost:8002` | core's base URL: the control link opens under it |
+| `LOGOS_CORE_CA_FILE`, `LOGOS_CORE_CERT_SHA256`, `LOGOS_CORE_TLS_INSECURE` | none (the system's trust) | how it trusts core's certificate over HTTPS, for a self-signed one: a PEM to trust, the certificate's SHA-256 fingerprint, or no verification; see [How modules reach core](https://logoscore.github.io/logos-docs/core-infrastructure/#how-modules-reach-core) |
 | `CALL_TIMEOUT` | `30s` | how long a call waits for a page, 1s to 10m (core's deadline wins when shorter) |
 | `MAX_BODY_BYTES` | `1048576` | largest answer taken from a page |
 | `LOG_FORMAT` | `json` | `json` or `text`, on stderr |
