@@ -190,7 +190,8 @@ would.
 
 ### Configuration
 
-Environment only: `FACTORY_ID` (default `dumbo-factory-local`; core keys registrations by instance id, so it must differ from the Dumbo channel's `CHANNEL_ID`), `LOG_FORMAT` (`json`
+Environment only: `FACTORY_ID` (default `dumbo-factory-local`; core keys registrations by instance id, so it must differ from the Dumbo channel's `CHANNEL_ID`), `LOGOS_CORE_BASE_URL` (the channel's, with the same TLS settings:
+builds upload their page to core), `LOG_FORMAT` (`json`
 or `text`), and core's RabbitMQ: `RABBITMQ_HOST`, `RABBITMQ_PORT`,
 `RABBITMQ_USER`, `RABBITMQ_PASSWORD`, `RABBITMQ_VHOST`.
 

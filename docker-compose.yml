@@ -41,6 +41,8 @@ services:
     restart: unless-stopped
     environment:
       FACTORY_ID: ${FACTORY_ID:-dumbo-factory-local}
+      # Builds fetch their files from core and upload the artifact to it.
+      LOGOS_CORE_BASE_URL: ${LOGOS_CORE_BASE_URL:-http://logos-core-dev:8002}
       RABBITMQ_HOST: ${RABBITMQ_HOST:-logos-rabbitmq}
       RABBITMQ_PORT: ${RABBITMQ_PORT:-5672}
       RABBITMQ_USER: ${RABBITMQ_USER:-logos}
