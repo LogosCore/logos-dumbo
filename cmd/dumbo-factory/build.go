@@ -25,7 +25,7 @@ var buildSchema = protocol.BuildSchema{
 	Channels: []protocol.BuildChannel{{
 		// The Dumbo channel's connection schema, version 1: the method is
 		// its built-in field, read from the endpoint; Dumbo adds none.
-		ModuleName: channelModule, Versions: []int{1},
+		ModuleName: channelModule, Num: 1, Versions: []int{1},
 		Kinds: []protocol.BuildKind{{Kind: protocol.KindBindCall}},
 	}},
 	// Its pages encrypt with AES-256-CBC and HMAC-SHA256 (PHP's openssl);
@@ -33,7 +33,7 @@ var buildSchema = protocol.BuildSchema{
 	Crypto: protocol.CryptoAES256CBCHMACSHA256,
 	Fields: []protocol.FieldSpec{
 		{
-			Key: "greeting", Type: protocol.FieldString, Label: "Greeting", Default: "hello from Dumbo", MaxLength: 200,
+			Key: "greeting", Num: 1, Type: protocol.FieldString, Label: "Greeting", Default: "hello from Dumbo", MaxLength: 200,
 			Order: 1, Description: "What the page answers the hello command with.",
 		},
 	},

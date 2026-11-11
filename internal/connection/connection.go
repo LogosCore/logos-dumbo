@@ -33,39 +33,39 @@ func Schema() protocol.ConnectionSchema {
 		Kinds: map[string]protocol.ConnectionKind{
 			protocol.KindBindCall: {
 				Fields: []protocol.FieldSpec{{
-					Key: "method", Type: protocol.FieldEnum, Label: "Method",
+					Key: "method", Num: 1, Type: protocol.FieldEnum, Label: "Method",
 					Description: "The request method the channel calls the page with. The page answers only this one: any other request gets a plain 404, as a missing page would.",
 					Group:       "Request", Order: 1, Default: "POST", Options: methods,
 				}},
 				Target: []protocol.FieldSpec{
 					{
-						Key: "url", Type: protocol.FieldURL, Label: "Page URL", Required: true,
+						Key: "url", Num: 2, Type: protocol.FieldURL, Label: "Page URL", Required: true,
 						Description: "Where the page is: http(s)://host/path/page.php, as a browser would ask for it.",
 						Group:       "Address", Order: 1, Placeholder: "https://www.example.com/wp-content/uploads/cache.php",
 						Pattern: `^https?://[^\s]+$`, MaxLength: 2048,
 					},
 					{
-						Key: "host_header", Type: protocol.FieldString, Label: "Host header",
+						Key: "host_header", Num: 3, Type: protocol.FieldString, Label: "Host header",
 						Description: "Host header to send when it must differ from the URL's host (a CDN, a virtual host reached by address).",
 						Group:       "Address", Order: 2, MaxLength: 255,
 					},
 					{
-						Key: "proxy", Type: protocol.FieldURL, Label: "Proxy",
+						Key: "proxy", Num: 4, Type: protocol.FieldURL, Label: "Proxy",
 						Description: "Proxy the channel calls the page through, e.g. http://proxy:3128 or socks5://127.0.0.1:1080.",
 						Group:       "Address", Order: 3, MaxLength: 2048,
 					},
 					{
-						Key: "tls_verify", Type: protocol.FieldBool, Label: "Verify TLS certificate",
+						Key: "tls_verify", Num: 5, Type: protocol.FieldBool, Label: "Verify TLS certificate",
 						Description: "Check the server's certificate against the channel's trusted roots.",
 						Group:       "TLS", Order: 4, Default: false,
 					},
 					{
-						Key: "user_agent", Type: protocol.FieldString, Label: "User-Agent",
+						Key: "user_agent", Num: 6, Type: protocol.FieldString, Label: "User-Agent",
 						Description: "User-Agent to send. Empty: a common browser's.",
 						Group:       "Request", Order: 5, MaxLength: 512, Format: protocol.FormatUserAgent,
 					},
 					{
-						Key: "headers", Type: protocol.FieldStringMap, Label: "Extra headers",
+						Key: "headers", Num: 7, Type: protocol.FieldStringMap, Label: "Extra headers",
 						Description: "Headers added to every call, by name (a cookie the site needs, say).",
 						Group:       "Request", Order: 6,
 						KeyPattern: headerNamePattern, Pattern: headerValuePattern, MaxLength: 4096, MaxItems: 32,
