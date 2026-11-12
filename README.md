@@ -81,7 +81,8 @@ Environment only (a `.env` file fills in what the environment does not set):
 | `CALL_TIMEOUT` | `30s` | how long a call waits for a page, 1s to 10m (core's deadline wins when shorter) |
 | `MAX_BODY_BYTES` | `1048576` | largest answer taken from a page |
 | `LOG_FORMAT` | `json` | `json` or `text`, on stderr |
-| `RABBITMQ_HOST`, `RABBITMQ_PORT`, `RABBITMQ_USER`, `RABBITMQ_PASSWORD`, `RABBITMQ_VHOST` | `localhost`, `5672`, `guest`, `guest`, `/` | core's RabbitMQ |
+| `RABBITMQ_HOST`, `RABBITMQ_PORT`, `RABBITMQ_USER`, `RABBITMQ_VHOST` | `localhost`, `5672`, `logos`, `/` | core's RabbitMQ (logos-core's dev stack, from the host) |
+| `RABBITMQ_PASSWORD` | none: required | its password, logos-core's `RABBITMQ_DEFAULT_PASS` |
 
 ### Management
 
@@ -193,7 +194,8 @@ would.
 Environment only: `FACTORY_ID` (default `dumbo-factory-local`; core keys registrations by instance id, so it must differ from the Dumbo channel's `CHANNEL_ID`), `LOGOS_CORE_BASE_URL` (the channel's, with the same TLS settings:
 builds upload their page to core), `LOG_FORMAT` (`json`
 or `text`), and core's RabbitMQ: `RABBITMQ_HOST`, `RABBITMQ_PORT`,
-`RABBITMQ_USER`, `RABBITMQ_PASSWORD`, `RABBITMQ_VHOST`.
+`RABBITMQ_USER`, `RABBITMQ_PASSWORD` (required), `RABBITMQ_VHOST`, with the
+channel's defaults.
 
 Management: `log_level` (live), beside factory-core's builds section
 (`max_concurrent_builds`, drain and resume, build counters).
@@ -208,7 +210,7 @@ two images `logos-dumbo-channel` and `logos-dumbo-factory`.
 ## Local development
 
 `docker compose up -d --build` joins logos-core's network (start core first;
-set `RABBITMQ_USER` and `RABBITMQ_PASSWORD` in `.env`): the channel, the
+set `RABBITMQ_PASSWORD` in `.env`): the channel, the
 factory, and `dumbo-www`, a `php:8.3-apache` server for trying pages. Build a
 page in core, put it in `./www`, and add a target with the URL
 `http://dumbo-www/<page>.php`. From the host it is on port 8095.

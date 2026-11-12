@@ -1,14 +1,21 @@
 package config
 
 import (
+	"os"
 	"strings"
 	"testing"
 	"time"
 )
 
+// TestMain gives every test the broker password, which has no default.
+func TestMain(m *testing.M) {
+	_ = os.Setenv("RABBITMQ_PASSWORD", "secret")
+	os.Exit(m.Run())
+}
+
 func TestDefaults(t *testing.T) {
 	for _, k := range []string{"CHANNEL_ID", "LOGOS_CORE_BASE_URL", "CALL_TIMEOUT", "MAX_BODY_BYTES", "LOG_FORMAT",
-		"RABBITMQ_USER", "RABBITMQ_PASSWORD", "RABBITMQ_HOST", "RABBITMQ_PORT", "RABBITMQ_VHOST"} {
+		"RABBITMQ_USER", "RABBITMQ_HOST", "RABBITMQ_PORT", "RABBITMQ_VHOST"} {
 		t.Setenv(k, "")
 	}
 	cfg, err := LoadFromEnv("")
@@ -16,8 +23,16 @@ func TestDefaults(t *testing.T) {
 		t.Fatal(err)
 	}
 	if cfg.ChannelID != "dumbo-main" || cfg.CoreBaseURL != "http://localhost:8002" || cfg.CallTimeout != 30*time.Second ||
-		cfg.MaxBodyBytes != 1<<20 || cfg.LogFormat != "json" || cfg.RabbitMQURL != "amqp://guest:guest@localhost:5672//" {
+		cfg.MaxBodyBytes != 1<<20 || cfg.LogFormat != "json" || cfg.RabbitMQURL != "amqp://logos:secret@localhost:5672//" {
 		t.Fatalf("defaults: %+v", cfg)
+	}
+}
+
+// The broker password has no default: without it the channel does not start.
+func TestPasswordRequired(t *testing.T) {
+	t.Setenv("RABBITMQ_PASSWORD", "")
+	if _, err := LoadFromEnv(""); err == nil {
+		t.Fatal("no RABBITMQ_PASSWORD: taken")
 	}
 }
 
