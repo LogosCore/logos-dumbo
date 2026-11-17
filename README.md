@@ -69,6 +69,12 @@ Declared at registration (`schema_version` "2", version 1), one kind:
 Target values never go into a page: operators fill them in when the page is
 on a server, and only the channel uses them.
 
+Every field has a number, the built-in field's and the targets' one
+numbering: `method` 1, then `url` 2, `host_header` 3, `proxy` 4,
+`tls_verify` 5, `user_agent` 6, `headers` 7. A number stays its field's
+(`TestFieldNumbers` pins them): a new field takes the next one, and a
+removed field's is never given again.
+
 ### Configuration
 
 Environment only (a `.env` file fills in what the environment does not set):
@@ -93,11 +99,23 @@ Environment only (a `.env` file fills in what the environment does not set):
 | `log_level` | `debug` / `info` / `warn` / `error` | live | `debug` logs every call; `info` calls that failed or reached something other than a page |
 
 Actions: `drain` (every call fails at once until resumed) and `resume`.
-Status: the control link (up or down), calls, pages answered, something
+Status: the control link (`link_up`), calls, pages answered, something
 else answered, calls failed, draining.
 
 On SIGINT/SIGTERM the channel stops taking calls, lets those in progress
 finish (up to `CALL_TIMEOUT` + 5s), closes the link and deregisters.
+
+### Code
+
+- `cmd/dumbo-channel/main.go`: the control-plane session (channel-core's
+  `channel.Run`, with the connection schema) and the control link
+  (`linkclient.Run`, the caller's `Call` its `Handler`, the link's state
+  its `OnState`). No listener and no `Opener`: the channel has no reverse
+  kind and no persistent one.
+- `internal/caller`: a call, a `linkclient.Handler`: the page's answer,
+  something else answering (the status and an excerpt), or a failure, with
+  the peer address. `caller_test.go` calls it against an `httptest` page.
+- `internal/connection`: the schema, one kind.
 
 ## The factory
 
@@ -109,6 +127,7 @@ finish (up to `CALL_TIMEOUT` + 5s), closes the link and deregisters.
 | Channel | `dumbo`, connection schema version 1, kind `bind-call` (Dumbo adds no parameters of its own) |
 | Crypto | `aes-256-cbc-hmac-sha256`: core generates the build's keys, Dumbo writes them into the page |
 | Fields | `greeting` (default "hello from Dumbo"): what the hello command answers |
+| Compression | none declared: its messages go unpacked |
 | Commands | `hello` (op 1, required): answers with the greeting; `download` (op 2, `download_file`): a file from the server to core; `upload` (op 3, `upload_file`): a file from core onto the server; `ls` (op 4, `list_dir`): a folder's entries; `rm` (op 5, `delete_path`): a file, a link or a folder; `stream_download` (op 6, `stream_file`): a file of any size to whoever downloads it; `stream_upload` (op 7, `upload_stream`): a file of any size onto the server as it is uploaded; `walk` (op 8, `walk_dir`): a folder and those under it, into core's file browser |
 
 The page answers the build's first `bind-call` connection through the Dumbo
@@ -127,6 +146,11 @@ would.
 - **It keeps nothing between requests.** It skips staging, so its session
   keeps the build's keys, and it takes any id its keys open a message under:
   the build id at the first call, the session id after.
+- **Every call must say core's time** (`at`) within 10 minutes of the
+  page's clock (`STALE_WINDOW`): a page remembers no message ids, so a call
+  further off (a replay, or a clock that is off) runs nothing, and the page
+  answers only an `err` `stale` with its own time. Core shows the target
+  refused, the page's time in its detail, until the clocks agree.
 - **`rehello`** (core's first call, under the build id): it answers with its
   `hello`: pid, OS and architecture with Go's names, host, user, process
   (`apache2`, `php-fpm`, …), integrity (root or user, with posix), the
@@ -162,8 +186,11 @@ would.
     and calls it when the uploader's bytes come (the page then asks); the
     last chunk's SHA-256 is checked.
   - Holds and unasked acks carry the stream's ctx too: core keeps it.
-  - A task stopped mid-transfer leaves an upload's temporary file: the page
-    hears no more of it, and knows no path to clean up.
+  - A `cancel` of a transfer (its ctx echoed) stops it: an upload's
+    temporary file is removed and the task ends `stopped`, saying how many
+    bytes had come; a download's ends `stopped`. Core's `err` about an
+    upload's item (it echoes the ctx too) removes its temporary file as
+    well.
 - **`ls`** lists a folder (a relative path from the page's own folder, `.`
   by default): every entry with its type, size, time, mode, owner and group
   (with posix), a link's target, and dot-names hidden; in pieces of 500
@@ -181,9 +208,10 @@ would.
 - **`rm`** removes a file, a link (never what it points to) or a folder, a
   folder with something in it only with `recursive`; never a filesystem's
   root. The output says what went.
-- **A `cancel`** gets `unknown_task`: its task already ended, or (a
-  transfer) the page cannot tell. An item a page
-  does not take gets `unknown_item`.
+- **A `cancel`** ends a walk where it stood, or a transfer (above). Any
+  other task ended within its call already: the page answers
+  `unknown_task`, naming the task, and core ends it. An item a page does not
+  take gets `unknown_item`.
 - **Every answer takes up to 4 tasks** (`get_tasks`), so the next call core
   makes may bring that many.
 - The CBOR, the AES-256-CBC and the HMAC-SHA256 are the page's own code
@@ -213,7 +241,36 @@ two images `logos-dumbo-channel` and `logos-dumbo-factory`.
 set `RABBITMQ_PASSWORD` in `.env`): the channel, the
 factory, and `dumbo-www`, a `php:8.3-apache` server for trying pages. Build a
 page in core, put it in `./www`, and add a target with the URL
-`http://dumbo-www/<page>.php`. From the host it is on port 8095.
+`http://dumbo-www/<page>.php`. From the host it is on port 8095
+(`DUMBO_WWW_PORT`).
+
+### Against an unreleased protocol or SDK
+
+The image builds from tagged modules alone (`.dockerignore` keeps a
+workspace out). With a local `go.work` (`use .` and
+`../logos-golang-protocol`, checkouts side by side), run binaries built on
+the host, mounted over the image's:
+
+```bash
+CGO_ENABLED=0 GOOS=linux go build -o .dev-bin/dumbo-channel ./cmd/dumbo-channel
+CGO_ENABLED=0 GOOS=linux go build -o .dev-bin/dumbo-factory ./cmd/dumbo-factory
+```
+
+```yaml
+# docker-compose.override.yml
+services:
+  dumbo-channel:
+    volumes:
+      - ./.dev-bin/dumbo-channel:/app/dumbo-channel:ro
+  dumbo-factory:
+    volumes:
+      - ./.dev-bin/dumbo-factory:/app/dumbo-factory:ro
+```
+
+Then `docker compose up -d`, without `--build`; after each change, build
+again and `docker compose restart`. `go.work`, the override and `.dev-bin/`
+are gitignored and never committed (the docs' [Changing the
+Protocol](https://logoscore.github.io/logos-docs/contributing/changing-the-protocol/)).
 
 ## Tests
 
