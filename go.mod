@@ -6,7 +6,7 @@ require (
 	github.com/joho/godotenv v1.5.1
 	github.com/logoscore/logos-golang-channel-core/v3 v3.9.7
 	github.com/logoscore/logos-golang-module-core v0.3.7
-	github.com/logoscore/logos-golang-protocol v0.65.0
+	github.com/logoscore/logos-golang-protocol v0.68.0
 )
 
 require (
